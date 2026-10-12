@@ -1,0 +1,8 @@
+Options -Indexes
+DirectoryIndex index.html index.php
+RewriteEngine On
+RewriteRule ^(?:api|auth|download)(?:/|$) index.php [END]
+RewriteRule ^optimization/?$ optimization/index.html [END]
+<FilesMatch "(^\.|\.(?:sqlite|db|env|log|bak|zip)$)">
+Require all denied
+</FilesMatch>

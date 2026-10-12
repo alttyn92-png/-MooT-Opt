@@ -1,0 +1,51 @@
+MooT 1.0.0 — публикация на VPS для cultmoot.online
+
+1. Linux VPS: Docker Engine и Compose v2 с поддержкой --wait.
+   Пакет включает сайт, сервер и downloads/MooT-Setup.exe для Windows x64.
+   Перед переносом существующего сайта сохраните его резервную копию.
+2. Загрузите папку moot из ZIP в отдельный каталог, например /opt/moot.
+3. В Google Cloud OAuth Web application:
+   origin: https://cultmoot.online
+   redirect: https://cultmoot.online/auth/google/callback
+   authorized domain: cultmoot.online
+   audience: External / In production. Завершите проверку Google, если она требуется.
+   Используются openid, email, profile. Локальный redirect при необходимости:
+   http://127.0.0.1:8765/auth/google/callback
+4. В папке moot выполните sh deploy.sh. При первом запуске создаётся .env.
+   Заполните ALEM_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
+   Секреты не включены в ZIP. Не помещайте .env в web или Git.
+5. DNS A cultmoot.online → адрес VPS. Уберите ошибочную AAAA при отсутствии IPv6.
+   Откройте TCP 80 и 443. Доступ SSH ограничьте своим адресом/ключом.
+   Порт 8765 не публикуется. Caddy обслуживает HTTPS и обновляет сертификат.
+   Приватная Docker-сеть: 172.30.0.0/24. Если она занята, измените subnet и
+   TRUSTED_PROXY_IPS одновременно в compose.yaml.
+6. Запустите sh deploy.sh повторно. Проверка: docker compose ps
+   Логи без HTTP access-журнала: docker compose logs --tail=100 app caddy
+7. Откройте https://cultmoot.online, войдите через Google, скачайте приложение,
+   создайте код и предоставьте доступ в приложении. Проверяйте настройки на
+   тестовом ПК, включая откат. Для этого ZIP сервер и агент имеют версию 1.0.0.
+
+РЕСУРСЫ
+Контейнер app: максимум 768 МБ, 1 CPU, 128 процессов. Caddy: 256 МБ.
+На VPS желательно от 2 ГБ RAM для ОС, Docker и сборки. Лимиты не резервируют RAM.
+В стоимость и фактический размер вашего VPS пакет не вмешивается.
+
+РЕЗЕРВНАЯ КОПИЯ И ОБНОВЛЕНИЕ
+Создать согласованную SQLite-копию (выберите новое имя):
+  docker compose exec -T app python backup.py /app/data/backup-1.sqlite
+  docker compose cp app:/app/data/backup-1.sqlite ./backup-1.sqlite
+Резервная копия содержит личную переписку и данные ПК: храните её закрыто.
+Перед обновлением сохраните копию и предыдущий ZIP, затем замените исходники,
+сохранив .env и Docker volumes, и выполните sh deploy.sh.
+Восстановление: docker compose stop app; замените файл state.sqlite в volume
+moot-data согласованной копией; удалите оставшиеся state.sqlite-wal и -shm
+только при остановленном app и сохранённой резервной копии; запустите app.
+Не выполняйте docker compose down -v: это удалит данные и сертификаты.
+
+ПРОВЕРКА ПЕРЕД ПУБЛИКАЦИЕЙ
+Docker отсутствует на машине сборки: запуск контейнеров, получение сертификата,
+DNS и Google callback должны быть проверены на вашем VPS. Внешнее развёртывание
+не выполнено автоматически. Локальный сервер и интеграционные тесты проверены.
+Для крупных сетевых атак нужна защита на стороне VPS/CDN, а не только код сайта.
+Документация ограничений сервера: https://www.uvicorn.org/settings/
+Документация HTTPS-прокси: https://caddyserver.com/docs/caddyfile/directives/reverse_proxy

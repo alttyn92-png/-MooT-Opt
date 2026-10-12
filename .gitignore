@@ -1,0 +1,21 @@
+# Private credentials and runtime state
+.env
+.env.*
+!.env.example
+config.php
+*.sqlite*
+*.db
+*.log
+session.protected
+outbox.json
+data/
+__pycache__/
+# Generated builds and installers
+**/bin/
+**/obj/
+agent-*/
+downloads/
+*.exe
+*.zip
+*.pdb
+*.user

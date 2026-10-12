@@ -1,0 +1,15 @@
+cultmoot.online {
+    request_body {
+        max_size 48KB
+    }
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+        Referrer-Policy "same-origin"
+    }
+    reverse_proxy app:8765
+}

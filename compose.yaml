@@ -1,0 +1,56 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: production
+      TRUSTED_PROXY_IPS: 172.30.0.0/24
+      REQUIRE_GOOGLE: "1"
+      PUBLIC_ORIGIN: https://cultmoot.online
+    volumes:
+      - moot-data:/app/data
+      - ./downloads:/app/downloads:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; r=urllib.request.Request('http://127.0.0.1:8765/api/config',headers={'Host':'cultmoot.online'}); urllib.request.urlopen(r,timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+    expose:
+      - "8765"
+    networks:
+      - private
+  caddy:
+    image: caddy:2-alpine
+    mem_limit: 256m
+    pids_limit: 128
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - private
+networks:
+  private:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+volumes:
+  moot-data:
+  caddy-data:
+  caddy-config:

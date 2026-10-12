@@ -1,0 +1,9 @@
+.env
+data/
+__pycache__/
+windows-agent/
+downloads/
+*.zip
+*.log
+
+.venv/
